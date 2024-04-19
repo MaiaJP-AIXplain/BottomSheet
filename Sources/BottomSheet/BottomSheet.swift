@@ -1,10 +1,4 @@
-//
-//  BottomSheet.swift
-//
-//
-//  Created by Wouter van de Kamp on 26/11/2022.
-//
-
+////  BottomSheet.swift//////  Created by Wouter van de Kamp on 26/11/2022.//
 import SwiftUI
 
 struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier, KeyboardReader {
@@ -52,7 +46,7 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
         ZStack() {
             content
                 .allowsHitTesting(allowBackgroundInteraction == .disabled ? false : true)
-                
+            
             if isPresented {
                 GeometryReader { geometry in
                     VStack(spacing: 0) {
@@ -62,9 +56,8 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
                             translation: $translation,
                             detents: detents
                         )
-                            .frame(height: showDragIndicator == .visible ? 22 : 0)
-                            .opacity(showDragIndicator == .visible ? 1 : 0)
-
+                        .frame(height: showDragIndicator == .visible ? 22 : 0)
+                        .opacity(showDragIndicator == .visible ? 1 : 0)
                         headerContent
                             .contentShape(Rectangle())
                             .gesture(
@@ -82,16 +75,21 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
                                         // clean translation next time
                                         newValue = 0
                                         
-                                        // Calculate velocity based on pt/s so it matches the UIPanGesture
-                                        let distance: CGFloat = value.translation.height
-                                        let time: CGFloat = value.time.timeIntervalSince(startTime!.time)
-                                        
-                                        let yVelocity: CGFloat = -1 * ((distance / time) / 1000)
-                                        startTime = nil
-                                        
-                                        if let result = snapBottomSheet(translation, detents, yVelocity) {
-                                            translation = result.size
-                                            sheetConfig?.selectedDetent = result
+                                        // Safely unwrap startTime using optional binding
+                                        if let startTime = startTime {
+                                            // Calculate velocity based on pt/s so it matches the UIPanGesture
+                                            let distance: CGFloat = value.translation.height
+                                            let time: CGFloat = value.time.timeIntervalSince(startTime.time)
+                                            
+                                            let yVelocity: CGFloat = -1 * ((distance / time) / 1000)
+                                            self.startTime = nil
+                                            
+                                            if let result = snapBottomSheet(translation, detents, yVelocity) {
+                                                translation = result.size
+                                                sheetConfig?.selectedDetent = result
+                                            }
+                                        } else {
+                                            // Handle the case where startTime is nil (e.g., snap back to a default position)
                                         }
                                     }
                             )
@@ -107,16 +105,15 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
                         }
                     }
                     .background(background)
-                    .frame(height:
-                            (limits.max - geometry.safeAreaInsets.top) > 0
-                                ? limits.max - geometry.safeAreaInsets.top
-                                : limits.max
+                    .frame(height: 
+                        (limits.max - geometry.safeAreaInsets.top) > 0
+                        ? limits.max - geometry.safeAreaInsets.top
+                        : limits.max 
                     )
                     .onChange(of: translation) { newValue in
                         // Small little hack to make the iOS scroll behaviour work smoothly
                         if limits.max == 0 { return }
                         translation = min(limits.max, max(newValue, limits.min))
-
                         currentGlobalTranslation = translation
                     }
                     .onAnimationChange(of: translation) { value in
@@ -145,10 +142,9 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
             /// Quick hack to prevent the scrollview from resetting the height when keyboard shows up.
             /// Replace if the root cause has been located.
             if value.detents.count == 0 { return }
-                                                
+            
             sheetConfig = value
-            translation = value.translation
-
+            translation = value.translation 
             detents = value.detents
             limits = detentLimits(detents: detents)
         }
@@ -159,4 +155,4 @@ struct SheetPlus<HContent: View, MContent: View, Background: View>: ViewModifier
             allowBackgroundInteraction = value
         }
     }
-}
+} 
